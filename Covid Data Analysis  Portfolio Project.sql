@@ -1,3 +1,17 @@
+/*
+COVID-19 Data Exploration
+
+Skills Utilized:
+- Joins
+- Common Table Expressions (CTEs)
+- Temporary Tables
+- Window Functions
+- Aggregate Functions
+- Creating Views
+- Data Type Conversion
+*/
+
+
 Select *
 From PortfolioProject..CovidDeaths
 where continent is not null
@@ -22,8 +36,8 @@ From PortfolioProject..CovidDeaths
 where location like '%states%'
 order by 1,2
 
---Looking at Total Cases vs Population
---Shows what Percentage of population that got covid
+-- Total Cases vs Total Deaths
+-- Shows likelihood of dying if you contract covid in your countr
 
 Select Location, date,Population, total_cases, (total_cases/population)*100 as PercentPopulationInfected
 From PortfolioProject..CovidDeaths
@@ -32,7 +46,7 @@ where continent is not null
 order by 1,2
 
 
---Looking at Countries with Highest Infection Rate  compared to Population
+-- Countries with Highest Infection Rate compared to Population
 
 Select Location,Population,MAX( total_cases) as HighestInfectionCount, MAX((total_cases/population))*100 as PercentPopulationInfected
 From PortfolioProject..CovidDeaths
@@ -51,8 +65,8 @@ Group by continent
 order by TotalDeathCount desc
 
 
-
---LET'S BREAK THINGS DOWN BY CONTINENT
+-- BREAKING THINGS DOWN BY CONTINENT
+-- Showing contintents with the highest death count per population
 
 Select location, MAX(cast(Total_deaths as int)) as TotalDeathCount
 From PortfolioProject..CovidDeaths
@@ -68,10 +82,7 @@ where continent is not null
 Group by continent 
 order by TotalDeathCount desc
 
-
-
 --Showing continent with the highest death count per population
-
 
 Select continent, MAX(cast(Total_deaths as int)) as TotalDeathCount
 From PortfolioProject..CovidDeaths
@@ -80,17 +91,14 @@ where continent is not null
 Group by continent 
 order by TotalDeathCount desc
 
-
 --GLOBAL NUMBERS 
-
+   
 Select SUM(new_cases) as total_cases, SUM(cast(new_deaths as int)) as total_deaths ,SUM(cast(new_deaths as int))/SUM(new_cases)*100 as DeathPercentage
 From PortfolioProject..CovidDeaths
 --where location like '%states%'
 where continent is not null
 --Group By date
 order by 1,2
-
-
 
 --Looking at Total Population VS VACCINATION
 
@@ -110,9 +118,7 @@ Join PortfolioProject..CovidVaccinations vac
 where dea.continent is not null
 order by 2,3
 
-
-
--- USE CTE
+-- Using CTE to perform Calculation on Partition By in previous query
 
 With PopvsVac (Continent , Location, Date, Populationn,New_vaccinations, RollingPeopleVaccinated)
 as
@@ -129,9 +135,7 @@ where dea.continent is not null
 Select *, (RollingPeopleVaccinated / Population) *100
 From PopvsVac
 
-
----TEMP TABLE
-
+-- Using Temp Table to perform Calculation on Partition By in previous query
 
 DROP Table if exists #PercentPopulationVaccinated
 Create Table #PercentPopulationVaccinated
@@ -158,11 +162,9 @@ Select *, (RollingPeopleVaccinated / Population) *100
 From #PercentPopulationVaccinated
 
 
-
---CREATING View to store data for later visualization
+-- Creating View to store data for later visualizations
 
 Create View PercentPopulationVaccinated  as
-
 Select dea.continent,dea.location,dea.date, dea.population,vac.new_vaccinations,
 SUM(CONVERT(int,vac.new_vaccinations)) OVER (Partition by dea.Location  Order by dea.location, dea.Date) as RollingPeopleVaccinated
 From PortfolioProject..CovidDeaths dea
